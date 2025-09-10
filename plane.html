@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>iOS Motion Sensor Test</title>
+  <style>
+    body { font-family: sans-serif; padding: 1em; }
+    .reading { margin: 0.3em 0; }
+    #stored { margin-top: 1em; padding: 0.5em; border: 1px solid #ccc; }
+    button { padding: 0.5em 1em; margin-top: 1em; }
+  </style>
+</head>
+<body>
+  <h1>Accelerometer / Gyroscope</h1>
+  
+  <button id="enableBtn">Enable Sensors</button>
+  
+  <div id="sensors" style="display:none;">
+    <div id="accel">
+      <div class="reading">Accel X: <span id="ax">-</span></div>
+      <div class="reading">Accel Y: <span id="ay">-</span></div>
+      <div class="reading">Accel Z: <span id="az">-</span></div>
+    </div>
+    
+    <div id="gyro">
+      <div class="reading">Gyro α (alpha): <span id="alpha">-</span></div>
+      <div class="reading">Gyro β (beta): <span id="beta">-</span></div>
+      <div class="reading">Gyro γ (gamma): <span id="gamma">-</span></div>
+    </div>
+    
+    <button id="storeBtn">Store Current Values</button>
+    <div id="stored"><strong>Stored Values:</strong><br>(none yet)</div>
+  </div>
+  
+  <script>
+    const axEl = document.getElementById("ax");
+    const ayEl = document.getElementById("ay");
+    const azEl = document.getElementById("az");
+    const alphaEl = document.getElementById("alpha");
+    const betaEl = document.getElementById("beta");
+    const gammaEl = document.getElementById("gamma");
+    const storedEl = document.getElementById("stored");
+    const enableBtn = document.getElementById("enableBtn");
+    const sensorsDiv = document.getElementById("sensors");
+
+    let latest = { ax: 0, ay: 0, az: 0, alpha: 0, beta: 0, gamma: 0 };
+
+    function initSensors() {
+      window.addEventListener("devicemotion", e => {
+        if (e.accelerationIncludingGravity) {
+          latest.ax = e.accelerationIncludingGravity.x || 0;
+          latest.ay = e.accelerationIncludingGravity.y || 0;
+          latest.az = e.accelerationIncludingGravity.z || 0;
+          axEl.textContent = latest.ax.toFixed(3);
+          ayEl.textContent = latest.ay.toFixed(3);
+          azEl.textContent = latest.az.toFixed(3);
+        }
+      });
+
+      window.addEventListener("deviceorientation", e => {
+        latest.alpha = e.alpha || 0;
+        latest.beta = e.beta || 0;
+        latest.gamma = e.gamma || 0;
+        alphaEl.textContent = latest.alpha.toFixed(3);
+        betaEl.textContent = latest.beta.toFixed(3);
+        gammaEl.textContent = latest.gamma.toFixed(3);
+      });
+    }
+
+    enableBtn.addEventListener("click", () => {
+      if (typeof DeviceMotionEvent.requestPermission === 'function') {
+        DeviceMotionEvent.requestPermission().then(response => {
+          if (response === 'granted') {
+            sensorsDiv.style.display = "block";
+            enableBtn.style.display = "none";
+            initSensors();
+          } else {
+            alert("Permission denied.");
+          }
+        }).catch(console.error);
+      } else {
+        // Non-iOS browsers
+        sensorsDiv.style.display = "block";
+        enableBtn.style.display = "none";
+        initSensors();
+      }
+    });
+
+    document.getElementById("storeBtn").addEventListener("click", () => {
+      storedEl.innerHTML += `<br>Accel: [${latest.ax.toFixed(3)}, ${latest.ay.toFixed(3)}, ${latest.az.toFixed(3)}]
+      Gyro: [${latest.alpha.toFixed(3)}, ${latest.beta.toFixed(3)}, ${latest.gamma.toFixed(3)}]`;
+    });
+  </script>
+</body>
+</html>
